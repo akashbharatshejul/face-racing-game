@@ -5,8 +5,8 @@ class MouthDetector:
     def __init__(self):
         self.hist = []
         self.baseline = None
+        self.dist_hist = []
 
-    # 🔹 now receives FaceMesh results
     def update(self, results):
 
         if not results or not results.multi_face_landmarks:
@@ -19,16 +19,26 @@ class MouthDetector:
 
         dist = abs(m_top.y - m_bottom.y)
 
-        # ---------- BUILD BASELINE ----------
-        self.hist.append(dist)
+        # ---------- SMOOTHING ----------
+        self.dist_hist.append(dist)
+
+        if len(self.dist_hist) > 5:
+            self.dist_hist.pop(0)
+
+        dist_smooth = sum(self.dist_hist) / len(self.dist_hist)
+
+        # ---------- BUILD BASELINE (ONLY WHEN MOUTH CLOSED) ----------
+        if dist_smooth < 0.08:  
+            self.hist.append(dist_smooth)
 
         if len(self.hist) > 30:
             self.hist.pop(0)
 
-        self.baseline = sum(self.hist) / len(self.hist)
+        if len(self.hist) > 0:
+            self.baseline = sum(self.hist) / len(self.hist)
 
         # ---------- MOUTH OPEN ----------
         if self.baseline is None:
             return False
 
-        return dist > self.baseline * 2.1
+        return dist_smooth > self.baseline * 2.0
