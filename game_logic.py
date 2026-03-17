@@ -134,9 +134,19 @@ menu_cooldown = 0
 # ---------- SPAWN ----------
 def spawn_enemies():
     enemies.clear()
-    lanes = random.sample(LANES, 2)
-    enemies.append([lanes[0], -300])
-    enemies.append([lanes[1], -700])
+
+    enemy_types = ["car", "suv", "truck", "bus"]
+
+    lanes = random.sample(LANES, 2)   # 👈 only 2 lanes
+
+    for lane in lanes:
+        etype = random.choice(enemy_types)
+
+        enemies.append([
+            lane,
+            random.randint(-800, -100),
+            etype
+        ])
 
 def spawn_coin():
     global COIN_COUNTER
@@ -406,8 +416,20 @@ while True:
                 enemy[1] += enemy_speed
 
                 if enemy[1] > HEIGHT:
-                    enemy[1] = random.randint(-600, -150)
-                    enemy[0] = random.choice(LANES)
+
+                    enemy_types = ["car", "suv", "truck", "bus"]
+
+                    # choose a lane NOT used by other enemy
+                    other_lanes = [e[0] for e in enemies if e != enemy]
+                    available_lanes = [l for l in LANES if l not in other_lanes]
+
+                    if available_lanes:
+                        enemy[0] = random.choice(available_lanes)
+                    else:
+                        enemy[0] = random.choice(LANES)
+
+                    enemy[1] = random.randint(-800, -150)
+                    enemy[2] = random.choice(enemy_types)
                     score += 1
 
                     if score > high_score:
@@ -520,7 +542,7 @@ while True:
     
 
     for enemy in enemies:
-        draw_car(screen, enemy[0], enemy[1], (255,0,0))
+        draw_enemy(screen, enemy[0], enemy[1], enemy[2])
 
     for coin in coins:
         if coin[2]:

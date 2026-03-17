@@ -3,60 +3,98 @@ import random
 import math
 
 CAR_W = 60
-CAR_H = 100
+CAR_H = 80
 
 wheel_angle = 0
+
+player_car_img = pygame.image.load("assets/player_car.png")
+player_car_img = pygame.transform.scale(player_car_img, (CAR_W, CAR_H))
+
+enemy_car_img = pygame.image.load("assets/enemy_car.png")
+enemy_car_img = pygame.transform.scale(enemy_car_img, (CAR_W, CAR_H))
+
+suv_img = pygame.image.load("assets/suv.png")
+suv_img = pygame.transform.scale(suv_img, (60,100))
+
+truck_img = pygame.image.load("assets/truck.png")
+truck_img = pygame.transform.scale(truck_img, (60,120))
+
+bus_img = pygame.image.load("assets/bus.png")
+bus_img = pygame.transform.scale(bus_img, (70,140))
 
 
 # ---------- 3D ROAD ----------
 def draw_road(screen, road_y, width, height):
+    # ---------- BACKGROUND ----------
     screen.fill((20,20,20))
+    # ---------- PERSPECTIVE ROAD ----------
+    top_width = width * 0.72
+    bottom_width = width * 0.82
 
-    # Perspective lane borders
-    pygame.draw.polygon(screen, (60,60,60),
-        [(80,0),(width-80,0),(width-40,height),(40,height)])
+    top_left = width/2 - top_width/2
+    top_right = width/2 + top_width/2
 
-    # Center lines perspective
-    for i in range(15):
-        y = (road_y + i*80) % height
-        scale = 1 + y/height
-        pygame.draw.rect(screen, (240,240,240),
-            (width//2 - 5*scale, y, 10*scale, 40*scale))
+    bottom_left = width/2 - bottom_width/2
+    bottom_right = width/2 + bottom_width/2
+
+    pygame.draw.polygon(
+        screen,
+        (60,60,60),
+        [
+            (top_left, height//9),
+            (top_right, height/9),
+            (bottom_right, height),
+            (bottom_left, height)
+        ]
+    )
+    # ---------- ROAD EDGE LINES ----------
+    pygame.draw.line(
+        screen,
+        (255,255,255),
+        (bottom_left, height),
+        (top_left, height//9),
+        4
+    )
+
+    pygame.draw.line(
+        screen,
+        (255,255,255),
+        (bottom_right, height),
+        (top_right, height//9),
+        4
+    )
+
+    # ---------- PERSPECTIVE LANE LINES ----------
+    for i in range(20):
+
+        y = (road_y + i * 80) % (height)
+
+        # perspective scaling
+        scale = y / (height)
+
+        lane_width = 6 + scale * 10
+        lane_height = 20 + scale * 40
+
+        pygame.draw.rect(
+            screen,
+            (240,240,240),
+            (
+                width//2 - lane_width/2,
+                y,
+                lane_width,
+                lane_height
+            )
+         )
 
 
 # ---------- 3D CAR ----------
 def draw_car(screen, x, y, color):
-    global wheel_angle
 
-    # Shadow
-    pygame.draw.ellipse(screen, (0,0,0), (x+5,y+90,50,15))
+    if color == (0,255,0):   # player car
+        screen.blit(player_car_img, (x,y))
 
-    # Main body
-    pygame.draw.rect(screen, color, (x,y,60,100), border_radius=8)
-
-    # Top highlight (3D effect)
-    pygame.draw.polygon(screen, (255,255,255,50),
-        [(x+5,y+10),(x+55,y+10),(x+45,y+40),(x+15,y+40)])
-
-    # Side panel darker
-    dark = (max(0,color[0]-60),0,0)
-    pygame.draw.rect(screen, dark, (x,y+40,60,60))
-
-    # Windows
-    pygame.draw.rect(screen, (180,220,255), (x+10,y+15,40,25), border_radius=5)
-
-    # Headlights
-    pygame.draw.circle(screen, (255,255,120),(x+12,y+5),4)
-    pygame.draw.circle(screen, (255,255,120),(x+48,y+5),4)
-
-    # Wheels rotating
-    wheel_angle += 0.3
-    for wx, wy in [(x+10,y+20),(x+50,y+20),(x+10,y+80),(x+50,y+80)]:
-        pygame.draw.circle(screen, (20,20,20), (wx,wy), 8)
-        lx = wx + math.cos(wheel_angle)*6
-        ly = wy + math.sin(wheel_angle)*6
-        pygame.draw.line(screen,(200,200,200),(wx,wy),(lx,ly),2)
-
+    else:                    # enemy car
+        screen.blit(enemy_car_img, (x,y))
 
 # ---------- 3D COIN ----------
 coin_angle = 0
@@ -243,3 +281,19 @@ def draw_sunny_overlay(screen):
     overlay.set_alpha(40)
     overlay.fill((255, 230, 150))
     screen.blit(overlay, (0,0))
+
+def draw_enemy(screen, x, y, etype):
+
+    if etype == "car":
+        img = enemy_car_img
+
+    elif etype == "suv":
+        img = suv_img
+
+    elif etype == "truck":
+        img = truck_img
+
+    else :
+        img = bus_img
+
+    screen.blit(img, (x, y))    
